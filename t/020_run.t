@@ -51,6 +51,13 @@ run_tests <<"--", "Program is walled in", -2;
 #
 --
 
+run_tests <<"--", "Program with a turn around";
+       #
+   #     X
+  #       # X
+   #  #  @
+--
+
 Test::NoWarnings::had_no_warnings () if $r;
 
 done_testing;
