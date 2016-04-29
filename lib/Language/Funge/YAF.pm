@@ -63,6 +63,17 @@ use constant {
     OP_SPACE          =>  ord (' '),
     OP_WALL           =>  ord ('#'),
     OP_EXIT           =>  ord ('@'),
+
+    OP_NUMBER_0       =>  ord ('0'),
+    OP_NUMBER_1       =>  ord ('1'),
+    OP_NUMBER_2       =>  ord ('2'),
+    OP_NUMBER_3       =>  ord ('3'),
+    OP_NUMBER_4       =>  ord ('4'),
+    OP_NUMBER_5       =>  ord ('5'),
+    OP_NUMBER_6       =>  ord ('6'),
+    OP_NUMBER_7       =>  ord ('7'),
+    OP_NUMBER_8       =>  ord ('8'),
+    OP_NUMBER_9       =>  ord ('9'),
 };
 
 
@@ -75,7 +86,7 @@ use constant {
     ERR_LOOPING       =>  -3,
 };
 
-my %VALID_OPS = map {$_ => 1} OP_EXIT;
+my %VALID_OPS = map {$_ => 1} OP_EXIT, OP_NUMBER_0 .. OP_NUMBER_9;
 
 #
 # Characters
@@ -196,8 +207,26 @@ sub run ($self, $x = 0, $y = 0, $direction = EAST, $turning = CLOCKWISE) {
         my $op = $self -> find_next_op;
         return   $op           if     $op <  0;   # Error occurred
         return   $self -> exit if     $op == OP_EXIT;
-        $self -> execute ($op) unless $op == OP_NONE;
+        if ($op != OP_NONE) {
+            my $error = $self -> execute ($op);
+            return $error if $error;
+        }
     }
+}
+
+#
+# Execute a particular operation
+#
+sub execute ($self, $op) {
+    if ($op >= OP_NUMBER_0 && $op <= OP_NUMBER_9) {
+        my $number = $self -> scan_number;
+        if ($number < 0) {
+            return $number;
+        }
+        $self -> push_stack ($number);
+        return;
+    }
+    die "execute called with unknown operation '$op'\n";
 }
 
 
@@ -419,7 +448,7 @@ sub turn_direction ($direction, $turning) {
 # Given (x, y) coordinates, a direction of movement, and a 
 # turning direction, return new coordinates.
 #
-sub step ($self, $x, $y, $direction, $turning) {
+sub step ($self, $x, $y, $direction, $turning = NO_TURNING) {
     my ($x_size, $y_size) = $self -> sizes;
     my ($dx, $dy) = turn movement ($direction), $turning;
 
@@ -441,6 +470,33 @@ sub step ($self, $x, $y, $direction, $turning) {
 
 sub exit ($self) {
     return $self -> pop_stack;
+}
+
+#
+# Scan a number starting from the current location.
+#
+sub scan_number ($self) {
+    my ($x, $y, $direction) = $self -> program_counter;
+    my  $number = $self -> find_operation ($x, $y) - OP_NUMBER_0;
+
+    my %seen;
+    $seen {$x, $y} ++;
+
+    while (1) {
+        my ($next_x, $next_y) = $self -> step ($x, $y, $direction);
+        my  $op = $self -> find_operation ($next_x, $next_y);
+        if ($op < OP_NUMBER_0 || $op > OP_NUMBER_9) {
+            $self -> set_program_counter ($x, $y);
+            return $number;
+        }
+        $number *= 10;
+        $number += $op - OP_NUMBER_0;
+        $x = $next_x;
+        $y = $next_y;
+        if ($seen {$x, $y} ++) {
+            return ERR_LOOPING;
+        }
+    }
 }
 
 1;
