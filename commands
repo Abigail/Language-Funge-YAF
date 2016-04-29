@@ -10,7 +10,7 @@ $
 :     Push the top of the stack (duplicate value)
 .     Pop the top of the stack, output as a number
 ,     Pop the top of the stack, output as Unicode character
-!     Pop value from stack; if 0, flip turning preferece
+?     Pop value from stack; if non-zero, turn
 <     Pop two values from the stack; push 1 if less,    0 otherwise
 =     Pop two values from the stack; push 1 if equal,   0 otherwise
 >     Pop two values from the stack; push 1 if greater, 0 otherwise
@@ -32,7 +32,7 @@ _     Pop value from stack (discard)
 '
 \
 |
-?     Pop value from stack; push rand() on stack
+!
 
 j     Pop two values; jump to this location
 r     Pop value; move into direction % 4
