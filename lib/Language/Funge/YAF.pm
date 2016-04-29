@@ -5,7 +5,7 @@ use strict;
 use warnings;
 no  warnings 'syntax';
 
-use feature 'signatures';
+use feature  'signatures';
 no  warnings 'experimental::signatures';
 
 our $VERSION = '2016042601';
