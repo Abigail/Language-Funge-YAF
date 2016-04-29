@@ -6,6 +6,9 @@ use strict;
 use warnings;
 no  warnings 'syntax';
 
+use feature  'signatures';
+no  warnings 'experimental::signatures';
+
 use Test::More 0.88;
 
 our $r = eval "require Test::NoWarnings; 1";
@@ -17,26 +20,24 @@ my $yaf = Language::Funge::YAF:: -> new -> init;
 isa_ok $yaf, "Language::Funge::YAF";
 
 
-ok $yaf -> compile (<<"--"), "Single line program compiled";
+sub run_tests ($program, $name, $ret_val_exp = 1) {
+    subtest $name => sub {
+        ok $yaf -> compile ($program), "Program compiled";
+        my $ret_val_got = $yaf -> run;
+        is $ret_val_got, $ret_val_exp, "Return value ok";
+    }
+}
+
+
+run_tests <<"--", "Single line program compiled";
   @  #
 --
 
-my $res = $yaf -> run;
-
-pass "Program ran";
-is $res, 1, "Expected return value";
-
-
-ok $yaf -> compile (<<"--"), "Compile program with corner";
+run_tests <<"--", "Compile program with corner";
    #
 
   @
 --
-
-$res = $yaf -> run;
-
-pass "Program with corner ran";
-is $res, 1, "And has expected return value";
 
 Test::NoWarnings::had_no_warnings () if $r;
 
