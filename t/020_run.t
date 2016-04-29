@@ -20,7 +20,7 @@ my $yaf = Language::Funge::YAF:: -> new -> init;
 isa_ok $yaf, "Language::Funge::YAF";
 
 
-sub run_tests ($program, $name, $ret_val_exp = 1) {
+sub run_tests ($program, $name, $ret_val_exp = 0) {
     subtest $name => sub {
         ok $yaf -> compile ($program), "Program compiled";
         my $ret_val_got = $yaf -> run;

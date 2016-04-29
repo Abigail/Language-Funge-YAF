@@ -440,7 +440,7 @@ sub step ($self, $x, $y, $direction, $turning) {
 ################################################################################
 
 sub exit ($self) {
-    return 1;
+    return $self -> pop_stack;
 }
 
 1;
