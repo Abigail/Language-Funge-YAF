@@ -201,10 +201,10 @@ sub run ($self, $x = 0, $y = 0, $direction = EAST, $turning = CLOCKWISE) {
 }
 
 
-sub find_operand ($self, $x, $y) {
-    #
-    # Return the operand at the given coordinates
-    #
+#
+# Return the operation at the given coordinates
+#
+sub find_operation ($self, $x, $y) {
     my $op = $program {$self} [$y] [$x];
 
     return OP_NONE if !$op;
@@ -253,7 +253,7 @@ sub find_next_op ($self) {
             ($next_x, $next_y) = $self -> step ($curr_x, $curr_y,
                                                 $try_direction, $try_turn);
 
-            $op = $self -> find_operand ($next_x, $next_y);
+            $op = $self -> find_operation ($next_x, $next_y);
 
             unless ($op == OP_WALL) {
                 $direction = turn_direction ($try_direction, $try_turn);
