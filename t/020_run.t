@@ -46,6 +46,11 @@ run_tests <<"--", "Program with multiple corners";
   #
 --
 
+run_tests <<"--", "Program is walled in", -2;
+ #
+#
+--
+
 Test::NoWarnings::had_no_warnings () if $r;
 
 done_testing;

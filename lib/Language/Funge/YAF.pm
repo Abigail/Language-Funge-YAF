@@ -65,6 +65,16 @@ use constant {
     OP_EXIT           =>  ord ('@'),
 };
 
+
+#
+# Errors
+#
+use constant {
+    ERR_ILLEGAL       =>  -1,
+    ERR_STUCK         =>  -2,
+    ERR_LOOPING       =>  -3,
+};
+
 my %VALID_OPS = map {$_ => 1} OP_EXIT;
 
 #
@@ -79,7 +89,6 @@ use constant {
 #
 use constant {
     OP_MASK           => 0x7F,
-    ERR_ILLEGAL       => -1,
 };
 
 
@@ -185,7 +194,7 @@ sub run ($self, $x = 0, $y = 0, $direction = EAST, $turning = CLOCKWISE) {
     #
     while (1) {
         my $op = $self -> find_next_op;
-        return   ERR_ILLEGAL   if     $op == OP_ILLEGAL;
+        return   $op           if     $op <  0;   # Error occurred
         return   $self -> exit if     $op == OP_EXIT;
         $self -> execute ($op) unless $op == OP_NONE;
     }
@@ -256,6 +265,13 @@ sub find_next_op ($self) {
         $curr_y = $next_y;
     }
 
+    if ($op == OP_WALL) {
+        #
+        # We are stuck. Don't update the program counter
+        #
+        return ERR_STUCK;
+    }
+
     #
     # Update program counter
     #
@@ -263,7 +279,7 @@ sub find_next_op ($self) {
 
     return $op if $VALID_OPS {$op};
 
-    return OP_ILLEGAL;
+    return ERR_ILLEGAL;
 }
 
 
