@@ -243,8 +243,8 @@ sub find_next_op ($self) {
         # direction. If that hits a wall, we're stuck.
         #
         my @escapes = ([ $direction, NO_TURNING],
-                       [ $direction,  $turning],
-                       [ $direction, -$turning],
+                       [ $direction,   $turning],
+                       [ $direction,  -$turning],
                        [-$direction, NO_TURNING]);
 
         my ($try_direction, $try_turn);
