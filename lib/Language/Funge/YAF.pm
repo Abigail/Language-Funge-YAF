@@ -156,20 +156,17 @@ sub run ($self, $x = 0, $y = 0, $direction = EAST, $turning = CLOCKWISE) {
     $direction += 0;
     $turning   += 0;
 
-    ($x, $y) = (0, 0) unless $y >= 0 && $x >= 0    &&
-                             $program {$self} [$y] &&
-                     defined $program {$self} [$y] [$x];
+    my ($x_size, $y_size) = $self -> sizes;
+
+    ($x, $y) = (0, 0) unless $x >= 0 && $x < $x_size &&
+                             $y >= 0 && $y < $y_size;
 
     #
     # Initialize program
     #
-    $program_counter {$self} = [];
-    $program_counter {$self} [0] [X]         = $x;
-    $program_counter {$self} [0] [Y]         = $y;
-    $program_counter {$self} [0] [DIRECTION] = $direction % NR_OF_DIRECTIONS;
-    $program_counter {$self} [0] [TURNING]   = $turning   % NR_OF_TURNINGS;
-
-    $stack {$self} = [];
+    $self -> set_program_counter ($x, $y, $direction % NR_OF_DIRECTIONS,
+                                          $turning   % NR_OF_TURNINGS);
+    $self -> init_stack;
 
     #
     # Main loop:
@@ -251,6 +248,8 @@ sub find_next_op ($self) {
 # Set program counter stats
 #
 sub set_program_counter ($self, $x, $y, $direction = undef, $turning = undef) {
+    $program_counter {$self} ||= [[ ]];
+
     my $pc = $program_counter {$self} [-1];
 
     $$pc [X]         = $x;
@@ -268,6 +267,15 @@ sub program_counter ($self) {
     @{$program_counter {$self} [-1]};
 }
 
+
+
+
+#
+# Initialize the stack
+#
+sub init_stack ($self) {
+    $stack {$self} = [];
+}
 
 
 #
