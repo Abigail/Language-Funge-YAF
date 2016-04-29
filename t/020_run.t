@@ -29,14 +29,21 @@ sub run_tests ($program, $name, $ret_val_exp = 1) {
 }
 
 
-run_tests <<"--", "Single line program compiled";
+run_tests <<"--", "Really simple program";
   @  #
 --
 
-run_tests <<"--", "Compile program with corner";
+run_tests <<"--", "Program with corner";
    #
 
   @
+--
+
+run_tests <<"--", "Program with multiple corners";
+   #   @
+
+ #      #
+  #
 --
 
 Test::NoWarnings::had_no_warnings () if $r;

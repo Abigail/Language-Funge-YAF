@@ -38,11 +38,11 @@ use constant {
 # Directions
 #
 use constant {
-    EAST              =>  0,
-    SOUTH             =>  1,
-    WEST              =>  2,
-    NORTH             =>  3,
-    NR_OF_DIRECTIONS  =>  4,
+    EAST              =>  1,
+    SOUTH             =>  2,
+    STAY_PUT          =>  0,
+    WEST              => -1,
+    NORTH             => -2,
 };
 
 #
@@ -52,7 +52,6 @@ use constant {
     CLOCKWISE         =>  1,
     NO_TURNING        =>  0,
     ANTI_CLOCKWISE    => -1,
-    NR_OF_TURNINGS    =>  2,
 };
 
 #
@@ -159,8 +158,12 @@ sub run ($self, $x = 0, $y = 0, $direction = EAST, $turning = CLOCKWISE) {
     $y         += 0;
     $direction += 0;
 
-    $turning = CLOCKWISE unless $turning == CLOCKWISE ||
-                                $turning == ANTI_CLOCKWISE;
+    $turning   = CLOCKWISE unless $turning   == CLOCKWISE ||
+                                  $turning   == ANTI_CLOCKWISE;
+    $direction = EAST      unless $direction == EAST  ||
+                                  $direction == SOUTH ||
+                                  $direction == WEST  ||
+                                  $direction == NORTH;
 
     my ($x_size, $y_size) = $self -> sizes;
 
@@ -170,8 +173,7 @@ sub run ($self, $x = 0, $y = 0, $direction = EAST, $turning = CLOCKWISE) {
     #
     # Initialize program
     #
-    $self -> set_program_counter ($x, $y, $direction % NR_OF_DIRECTIONS,
-                                          $turning);
+    $self -> set_program_counter ($x, $y, $direction, $turning);
     $self -> init_stack;
 
     #
@@ -212,6 +214,9 @@ sub find_operand ($self, $x, $y) {
 sub find_next_op ($self) {
     my ($curr_x, $curr_y, $direction, $turning) = $self -> program_counter;
 
+    my $old_direction = $direction;
+    my $old_turning   = $turning;
+
     my ($x_size, $y_size) = $self -> sizes;
 
     my $op;
@@ -220,29 +225,32 @@ sub find_next_op ($self) {
 
     while (1) {
         #
-        # Direction may change, so we calculate dx/dy in each iteration.
+        # We will try to move one step ahead. If we hit a wall, we
+        # try turning. If we hit a wall again, we try turning in the
+        # other direction. If that hits a wall as well, we flip
+        # direction. If that hits a wall, we're stuck.
         #
-        ($next_x, $next_y) = $self -> step ($curr_x, $curr_y,
-                                            $direction, NO_TURNING);
+        my @escapes = ([ $direction, NO_TURNING],
+                       [ $direction,  $turning],
+                       [ $direction, -$turning],
+                       [-$direction, NO_TURNING]);
 
-        $op = $self -> find_operand ($next_x, $next_y);
+        my ($try_direction, $try_turn);
+        foreach my $escape (@escapes) {
+            ($try_direction, $try_turn) = @$escape;
+            ($next_x, $next_y) = $self -> step ($curr_x, $curr_y,
+                                                $try_direction, $try_turn);
 
-        if ($op == OP_WALL) {
-            #
-            # Now we need to change direction. Find out whether we can turn
-            #
-            my ($try_x, $try_y) = $self -> step ($curr_x, $curr_y,
-                                                 $direction, $turning);
-            my $try_op = $self -> find_operand ($try_x, $try_y);
-            if ($try_op == OP_WALL) {
-                ...;
+            $op = $self -> find_operand ($next_x, $next_y);
+
+            unless ($op == OP_WALL) {
+                $direction = turn_direction ($try_direction, $try_turn);
+                $turning   = $try_turn unless $try_turn == NO_TURNING;
+                last;
             }
-            $direction = turn_direction ($direction, $turning);
-            ($next_x, $next_y) = ($try_x, $try_x);
         }
-        elsif ($op != OP_SPACE) {
-            last;
-        }
+        
+        last unless $op == OP_SPACE;
 
         $curr_x = $next_x;
         $curr_y = $next_y;
@@ -251,7 +259,7 @@ sub find_next_op ($self) {
     #
     # Update program counter
     #
-    $self -> set_program_counter ($next_x, $next_y);
+    $self -> set_program_counter ($next_x, $next_y, $direction, $turning);
 
     return $op if $VALID_OPS {$op};
 
@@ -263,15 +271,16 @@ sub find_next_op ($self) {
 #
 # Set program counter stats
 #
-sub set_program_counter ($self, $x, $y, $direction = undef, $turning = undef) {
+sub set_program_counter ($self, $x, $y, $direction = undef,
+                                        $turning   = undef) {
     $program_counter {$self} ||= [[ ]];
 
     my $pc = $program_counter {$self} [-1];
 
     $$pc [X]         = $x;
     $$pc [Y]         = $y;
-    $$pc [DIRECTION] = $direction if defined $direction;
-    $$pc [TURNING]   = $turning   if defined $turning;
+    $$pc [DIRECTION] = $direction if $direction && $direction != STAY_PUT;
+    $$pc [TURNING]   = $turning   if $turning   && $turning   != NO_TURNING;
 
     $self;
 }
@@ -361,9 +370,21 @@ sub turn ($dx, $dy, $turning) {
 # Given a direction and a turning direction, return new direction
 #
 sub turn_direction ($direction, $turning) {
-    $direction += $turning == CLOCKWISE ? 1 : -1;
-    $direction %= NR_OF_DIRECTIONS;
-    return $direction;
+    if ($turning == CLOCKWISE) {
+        return EAST  if $direction == NORTH;
+        return SOUTH if $direction == EAST ;
+        return WEST  if $direction == SOUTH;
+        return NORTH;
+    }
+    elsif ($turning == ANTI_CLOCKWISE) {
+        return EAST  if $direction == SOUTH;
+        return SOUTH if $direction == WEST ;
+        return WEST  if $direction == NORTH;
+        return NORTH;
+    }
+    else {
+        return $direction;
+    }
 }
 
 
