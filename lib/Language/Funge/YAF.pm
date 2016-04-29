@@ -74,6 +74,9 @@ use constant {
     OP_NUMBER_7       =>  ord ('7'),
     OP_NUMBER_8       =>  ord ('8'),
     OP_NUMBER_9       =>  ord ('9'),
+
+    OP_WRITE_NUMBER   =>  ord ('.'),
+    OP_WRITE_CHAR     =>  ord (','),
 };
 
 
@@ -86,7 +89,9 @@ use constant {
     ERR_LOOPING       =>  -3,
 };
 
-my %VALID_OPS = map {$_ => 1} OP_EXIT, OP_NUMBER_0 .. OP_NUMBER_9;
+my %VALID_OPS = map {$_ => 1} OP_EXIT, OP_NUMBER_0 .. OP_NUMBER_9,
+                              OP_WRITE_NUMBER, OP_WRITE_CHAR,
+                              ;
 
 #
 # Characters
@@ -224,6 +229,11 @@ sub execute ($self, $op) {
             return $number;
         }
         $self -> push_stack ($number);
+        return;
+    }
+    if ($op == OP_WRITE_NUMBER ||
+        $op == OP_WRITE_CHAR) {
+        $self -> write_value ($op);
         return;
     }
     die "execute called with unknown operation '$op'\n";
@@ -498,6 +508,17 @@ sub scan_number ($self) {
         }
     }
 }
+
+
+#
+# Write the top of the stack, either as a number, or a character.
+#
+sub write_value ($self, $op) {
+    my $value = $self -> pop_stack;
+    print $op == OP_WRITE_NUMBER ? $value : chr $value;
+    return;
+}
+
 
 1;
 
