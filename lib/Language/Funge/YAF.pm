@@ -126,7 +126,7 @@ sub compile ($self, $text) {
     # Pad with spaces when necessary
     #
     foreach my $gridline (@grid) {
-        push @$gridline => (SPACE) x ($max - @$gridline);
+        push @$gridline => (OP_SPACE) x ($max - @$gridline);
     }
 
     $self -> set_sizes ($max, scalar @grid);
