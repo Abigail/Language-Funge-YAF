@@ -21,6 +21,7 @@ fieldhash my %program_counter;  # Program Counter:  [x position,
 fieldhash my %stack;            # Stack a running program uses
 
 sub movement;
+sub turn;
 
 #
 # PC index constants.
@@ -47,8 +48,9 @@ use constant {
 # Turn preference
 #
 use constant {
-    CLOCKWISE         =>  0,
-    ANTI_CLOCKWISE    =>  1,
+    CLOCKWISE         =>  1,
+    NO_TURNING        =>  0,
+    ANTI_CLOCKWISE    => -1,
     NR_OF_TURNINGS    =>  2,
 };
 
@@ -154,7 +156,9 @@ sub run ($self, $x = 0, $y = 0, $direction = EAST, $turning = CLOCKWISE) {
     $x         += 0;
     $y         += 0;
     $direction += 0;
-    $turning   += 0;
+
+    $turning = CLOCKWISE unless $turning == CLOCKWISE ||
+                                $turning == ANTI_CLOCKWISE;
 
     my ($x_size, $y_size) = $self -> sizes;
 
@@ -165,7 +169,7 @@ sub run ($self, $x = 0, $y = 0, $direction = EAST, $turning = CLOCKWISE) {
     # Initialize program
     #
     $self -> set_program_counter ($x, $y, $direction % NR_OF_DIRECTIONS,
-                                          $turning   % NR_OF_TURNINGS);
+                                          $turning);
     $self -> init_stack;
 
     #
@@ -217,12 +221,8 @@ sub find_next_op ($self) {
         #
         # Direction may change, so we calculate dx/dy in each iteration.
         #
-        my ($dx, $dy) = movement ($direction);
-
-        $next_x = ($curr_x + $dx) % $x_size;
-        $next_y = ($curr_y + $dy) % $y_size;
-        $next_x =  $x_size - 1 if $next_x < 0;
-        $next_y =  $y_size - 1 if $next_y < 0;
+        ($next_x, $next_y) = $self -> step ($curr_x, $curr_y,
+                                            $direction, NO_TURNING);
 
         $op = $self -> find_operand ($next_x, $next_y);
 
@@ -321,6 +321,39 @@ sub movement ($direction) {
 
     return ($dx, $dy);
 }
+
+
+#
+# Given (dx, dy) movement, and a turning direction, find new movement.
+#
+sub turn ($dx, $dy, $turning) {
+    if ($turning == CLOCKWISE) {
+        ($dx, $dy) = (-$dy,  $dx);
+    }
+    elsif ($turning == ANTI_CLOCKWISE) {
+        ($dx, $dy) = ( $dy, -$dx);
+    }
+    # else ($turning == NO_TURNING)
+    return ($dx, $dy);
+}
+
+
+#
+# Given (x, y) coordinates, a direction of movement, and a 
+# turning direction, return new coordinates.
+#
+sub step ($self, $x, $y, $direction, $turning) {
+    my ($x_size, $y_size) = $self -> sizes;
+    my ($dx, $dy) = turn movement ($direction), $turning;
+
+    my  $new_x = ($x + $dx) % $x_size;
+    my  $new_y = ($y + $dy) % $y_size;
+        $new_x =  $x_size - 1 if $new_x < 0;
+        $new_y =  $y_size - 1 if $new_y < 0;
+
+    return ($new_x, $new_y);
+}
+
 
 
 ################################################################################
