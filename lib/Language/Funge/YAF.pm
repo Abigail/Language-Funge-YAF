@@ -277,6 +277,20 @@ sub init_stack ($self) {
     $stack {$self} = [];
 }
 
+#
+# Pop from the stack; if stack is empty, return 0.
+#
+sub pop_stack ($self) {
+    return @{$stack {$self}} ? pop @{$stack {$self}} : 0
+}
+
+#
+# Push to the stack.
+#
+sub push_stack ($self, $item) {
+    push @{$stack {$self}} => $item;
+}
+
 
 #
 # Get/set the current size (width, height) of the program
