@@ -130,6 +130,7 @@ sub compile ($self, $text) {
         push @$gridline => (OP_SPACE) x ($max - @$gridline);
     }
 
+    $self -> clear_sizes;
     $self -> set_sizes ($max, scalar @grid);
 
     $program {$self}   = \@grid;
@@ -311,6 +312,10 @@ sub push_stack ($self, $item) {
 # Get/set the current size (width, height) of the program
 #
 sub sizes ($self) {@{$sizes {$self}}}
+
+sub clear_sizes ($self) {
+    $sizes {$self} = [0, 0];
+}
 
 sub set_sizes ($self, $x, $y) {
     $sizes {$self}   ||= [0, 0];
