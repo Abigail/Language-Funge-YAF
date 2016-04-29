@@ -232,6 +232,9 @@ sub find_next_op ($self) {
     my $next_x;
     my $next_y;
 
+    my %seen;
+    $seen {$curr_x, $curr_y, $direction, $turning} ++;
+
     while (1) {
         #
         # We will try to move one step ahead. If we hit a wall, we
@@ -263,6 +266,14 @@ sub find_next_op ($self) {
 
         $curr_x = $next_x;
         $curr_y = $next_y;
+        
+        if ($seen {$curr_x, $curr_y, $direction, $turning} ++) {
+            #
+            # We've been here, facing the same direction, and wanting to
+            # turn the same way. 
+            #
+            return ERR_LOOPING;
+        }
     }
 
     if ($op == OP_WALL) {
