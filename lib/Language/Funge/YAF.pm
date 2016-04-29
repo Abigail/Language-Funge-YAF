@@ -22,6 +22,7 @@ fieldhash my %stack;            # Stack a running program uses
 
 sub movement;
 sub turn;
+sub turn_direction;
 
 #
 # PC index constants.
@@ -198,8 +199,7 @@ sub find_operand ($self, $x, $y) {
 
     $op &= OP_MASK;
 
-    return OP_NONE if $op == OP_SPACE;
-    return $op     if $VALID_OPS {$op};
+    return $op if $op == OP_SPACE || $op == OP_WALL || $VALID_OPS {$op};
 
     return OP_ILLEGAL;
 }
@@ -226,7 +226,22 @@ sub find_next_op ($self) {
 
         $op = $self -> find_operand ($next_x, $next_y);
 
-        last if $op && $op != OP_SPACE;
+        if ($op == OP_WALL) {
+            #
+            # Now we need to change direction. Find out whether we can turn
+            #
+            my ($try_x, $try_y) = $self -> step ($curr_x, $curr_y,
+                                                 $direction, $turning);
+            my $try_op = $self -> find_operand ($try_x, $try_y);
+            if ($try_op == OP_WALL) {
+                ...;
+            }
+            $direction = turn_direction ($direction, $turning);
+            ($next_x, $next_y) = ($try_x, $try_x);
+        }
+        elsif ($op != OP_SPACE) {
+            last;
+        }
 
         $curr_x = $next_x;
         $curr_y = $next_y;
@@ -335,6 +350,15 @@ sub turn ($dx, $dy, $turning) {
     }
     # else ($turning == NO_TURNING)
     return ($dx, $dy);
+}
+
+#
+# Given a direction and a turning direction, return new direction
+#
+sub turn_direction ($direction, $turning) {
+    $direction += $turning == CLOCKWISE ? 1 : -1;
+    $direction %= NR_OF_DIRECTIONS;
+    return $direction;
 }
 
 

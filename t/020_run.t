@@ -27,6 +27,17 @@ pass "Program ran";
 is $res, 1, "Expected return value";
 
 
+ok $yaf -> compile (<<"--"), "Compile program with corner";
+   #
+
+  @
+--
+
+$res = $yaf -> run;
+
+pass "Program with corner ran";
+is $res, 1, "And has expected return value";
+
 Test::NoWarnings::had_no_warnings () if $r;
 
 done_testing;
