@@ -4,6 +4,9 @@ MANIFEST
 t/000_basic.t
 t/010_compile.t
 t/020_run.t
+t/030_numbers.t
+t/040_write_number.t
+t/045_write_char.t
 t/950_pod.t
 t/960_pod_coverage.t
 t/980_versions.t
