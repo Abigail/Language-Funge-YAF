@@ -55,7 +55,7 @@ use constant {
 };
 
 #
-# Operands
+# Operators
 #
 use constant {
     OP_ILLEGAL        => -1,
