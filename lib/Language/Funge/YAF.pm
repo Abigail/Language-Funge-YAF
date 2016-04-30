@@ -60,23 +60,28 @@ use constant {
 use constant {
     OP_ILLEGAL        => -1,
     OP_NONE           =>  0,
-    OP_SPACE          =>  ord (' '),
-    OP_WALL           =>  ord ('#'),
-    OP_EXIT           =>  ord ('@'),
+    OP_SPACE          =>  ord (' '),        # 0x20
+    OP_WALL           =>  ord ('#'),        # 0x23
+    OP_EXIT           =>  ord ('@'),        # 0x40
 
-    OP_NUMBER_0       =>  ord ('0'),
-    OP_NUMBER_1       =>  ord ('1'),
-    OP_NUMBER_2       =>  ord ('2'),
-    OP_NUMBER_3       =>  ord ('3'),
-    OP_NUMBER_4       =>  ord ('4'),
-    OP_NUMBER_5       =>  ord ('5'),
-    OP_NUMBER_6       =>  ord ('6'),
-    OP_NUMBER_7       =>  ord ('7'),
-    OP_NUMBER_8       =>  ord ('8'),
-    OP_NUMBER_9       =>  ord ('9'),
+    OP_NUMBER_0       =>  ord ('0'),        # 0x30
+    OP_NUMBER_1       =>  ord ('1'),        # 0x31
+    OP_NUMBER_2       =>  ord ('2'),        # 0x32
+    OP_NUMBER_3       =>  ord ('3'),        # 0x33
+    OP_NUMBER_4       =>  ord ('4'),        # 0x34
+    OP_NUMBER_5       =>  ord ('5'),        # 0x35
+    OP_NUMBER_6       =>  ord ('6'),        # 0x36
+    OP_NUMBER_7       =>  ord ('7'),        # 0x37
+    OP_NUMBER_8       =>  ord ('8'),        # 0x38
+    OP_NUMBER_9       =>  ord ('9'),        # 0x39
 
-    OP_WRITE_NUMBER   =>  ord ('.'),
-    OP_WRITE_CHAR     =>  ord (','),
+    OP_WRITE_NUMBER   =>  ord ('.'),        # 0x2E
+    OP_WRITE_CHAR     =>  ord (','),        # 0x2C
+
+    OP_ADDITION       =>  ord ('+'),        # 0x2B
+    OP_SUBTRACTION    =>  ord ('-'),        # 0x2D
+    OP_MULTIPLICATION =>  ord ('*'),        # 0x2A
+    OP_DIVISION       =>  ord ('/'),        # 0x2F
 };
 
 
@@ -84,14 +89,19 @@ use constant {
 # Errors
 #
 use constant {
-    ERR_ILLEGAL       =>  -1,
-    ERR_STUCK         =>  -2,
-    ERR_LOOPING       =>  -3,
+    ERR_ILLEGAL           =>  -1,
+    ERR_STUCK             =>  -2,
+    ERR_LOOPING           =>  -3,
+    ERR_DIVISION_BY_ZERO  =>  -4,
 };
 
-my %VALID_OPS = map {$_ => 1} OP_EXIT, OP_NUMBER_0 .. OP_NUMBER_9,
-                              OP_WRITE_NUMBER, OP_WRITE_CHAR,
-                              ;
+my %ARITHMETIC_OP = map {$_ => 1} OP_ADDITION, OP_SUBTRACTION,
+                                  OP_MULTIPLICATION, OP_DIVISION;
+my %WRITE_OP      = map {$_ => 1} OP_WRITE_NUMBER, OP_WRITE_CHAR;
+
+my %VALID_OPS     = (%ARITHMETIC_OP, %WRITE_OP,
+                      map {$_ => 1} OP_EXIT,
+                                    OP_NUMBER_0 .. OP_NUMBER_9,);
 
 #
 # Characters
@@ -231,10 +241,12 @@ sub execute ($self, $op) {
         $self -> push_stack ($number);
         return;
     }
-    if ($op == OP_WRITE_NUMBER ||
-        $op == OP_WRITE_CHAR) {
+    elsif ($WRITE_OP {$op}) {
         $self -> write_value ($op);
         return;
+    }
+    elsif ($ARITHMETIC_OP {$op}) {
+        return $self -> arithmetic ($op);
     }
     die "execute called with unknown operation '$op'\n";
 }
@@ -516,6 +528,35 @@ sub scan_number ($self) {
 sub write_value ($self, $op) {
     my $value = $self -> pop_stack;
     print $op == OP_WRITE_NUMBER ? $value : chr $value;
+    return;
+}
+
+
+#
+# Pop two numbers, add, subtract, multiply, or divide them.
+# Push the result back on the stack; when dividing, push both
+# quotient and modulus.
+#
+sub arithmetic ($self, $op) {
+    my $x = $self -> pop_stack;
+    my $y = $self -> pop_stack;
+    if    ($op == OP_ADDITION) {
+        $self -> push_stack ($x + $y);
+    }
+    elsif ($op == OP_SUBTRACTION) {
+        $self -> push_stack ($x - $y);
+    }
+    elsif ($op == OP_MULTIPLICATION) {
+        $self -> push_stack ($x * $y);
+    }
+    elsif ($op == OP_DIVISION) {
+        return ERR_DIVISION_BY_ZERO unless $y;
+        $self -> push_stack (int ($x / $y));
+        $self -> push_stack      ($x % $y);
+    }
+    else {
+        die "Unknown arithmetic operator '$op'\n";
+    }
     return;
 }
 
