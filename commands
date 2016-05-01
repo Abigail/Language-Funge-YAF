@@ -1,12 +1,10 @@
 0-9   If previous command was 0-9, multiply top of stack by 10,
       then add number, else, push number on stack
 #     Wall
-$
 +     Pop two values from the stack; push the sum
 -     Pop two values from the stack; push the difference
 *     Pop two values from the stack; push the product
-/     Pop two values from the stack; push the quotient (integer part)
-%     Pop two values from the stack; push the modulus
+/     Pop two values from the stack; push the quotient and modulus
 :     Push the top of the stack (duplicate value)
 .     Pop the top of the stack, output as a number
 ,     Pop the top of the stack, output as Unicode character
@@ -33,6 +31,8 @@ _     Pop value from stack (discard)
 \
 |
 !
+%
+$
 
 j     Pop two values; jump to this location
 r     Pop value; move into direction % 4
