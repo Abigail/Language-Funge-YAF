@@ -45,6 +45,15 @@ run_tests <<"--", "Read and print multiple numbers", "1523456632";
     #
 --
 
+
+run_tests <<"--", "Print from empty stack", "0";
+ .@
+--
+
+run_tests <<"--", "Repeatedly print from empty stack", "0000";
+ ....@
+--
+
 Test::NoWarnings::had_no_warnings () if $r;
 
 done_testing;
