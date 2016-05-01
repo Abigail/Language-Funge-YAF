@@ -58,30 +58,33 @@ use constant {
 # Operators
 #
 use constant {
-    OP_ILLEGAL        => -1,
-    OP_NONE           =>  0,
-    OP_SPACE          =>  ord (' '),        # 0x20
-    OP_WALL           =>  ord ('#'),        # 0x23
-    OP_EXIT           =>  ord ('@'),        # 0x40
+    OP_ILLEGAL            => -1,
+    OP_NONE               =>  0,
+    OP_SPACE              =>  ord (' '),        # 0x20
+    OP_WALL               =>  ord ('#'),        # 0x23
+    OP_EXIT               =>  ord ('@'),        # 0x40
 
-    OP_NUMBER_0       =>  ord ('0'),        # 0x30
-    OP_NUMBER_1       =>  ord ('1'),        # 0x31
-    OP_NUMBER_2       =>  ord ('2'),        # 0x32
-    OP_NUMBER_3       =>  ord ('3'),        # 0x33
-    OP_NUMBER_4       =>  ord ('4'),        # 0x34
-    OP_NUMBER_5       =>  ord ('5'),        # 0x35
-    OP_NUMBER_6       =>  ord ('6'),        # 0x36
-    OP_NUMBER_7       =>  ord ('7'),        # 0x37
-    OP_NUMBER_8       =>  ord ('8'),        # 0x38
-    OP_NUMBER_9       =>  ord ('9'),        # 0x39
+    OP_NUMBER_0           =>  ord ('0'),        # 0x30
+    OP_NUMBER_1           =>  ord ('1'),        # 0x31
+    OP_NUMBER_2           =>  ord ('2'),        # 0x32
+    OP_NUMBER_3           =>  ord ('3'),        # 0x33
+    OP_NUMBER_4           =>  ord ('4'),        # 0x34
+    OP_NUMBER_5           =>  ord ('5'),        # 0x35
+    OP_NUMBER_6           =>  ord ('6'),        # 0x36
+    OP_NUMBER_7           =>  ord ('7'),        # 0x37
+    OP_NUMBER_8           =>  ord ('8'),        # 0x38
+    OP_NUMBER_9           =>  ord ('9'),        # 0x39
 
-    OP_WRITE_NUMBER   =>  ord ('.'),        # 0x2E
-    OP_WRITE_CHAR     =>  ord (','),        # 0x2C
+    OP_WRITE_NUMBER       =>  ord ('.'),        # 0x2E
+    OP_WRITE_CHAR         =>  ord (','),        # 0x2C
 
-    OP_ADDITION       =>  ord ('+'),        # 0x2B
-    OP_SUBTRACTION    =>  ord ('-'),        # 0x2D
-    OP_MULTIPLICATION =>  ord ('*'),        # 0x2A
-    OP_DIVISION       =>  ord ('/'),        # 0x2F
+    OP_ADDITION           =>  ord ('+'),        # 0x2B
+    OP_SUBTRACTION        =>  ord ('-'),        # 0x2D
+    OP_MULTIPLICATION     =>  ord ('*'),        # 0x2A
+    OP_DIVISION           =>  ord ('/'),        # 0x2F
+
+    OP_STACK_DUPLICATE    =>  ord (':'),        # 0x3A
+    OP_STACK_DISCARD      =>  ord ('_'),        # 0x5F
 };
 
 
@@ -98,8 +101,9 @@ use constant {
 my %ARITHMETIC_OP = map {$_ => 1} OP_ADDITION, OP_SUBTRACTION,
                                   OP_MULTIPLICATION, OP_DIVISION;
 my %WRITE_OP      = map {$_ => 1} OP_WRITE_NUMBER, OP_WRITE_CHAR;
+my %STACK_OP      = map {$_ => 1} OP_STACK_DUPLICATE, OP_STACK_DISCARD;
 
-my %VALID_OPS     = (%ARITHMETIC_OP, %WRITE_OP,
+my %VALID_OPS     = (%ARITHMETIC_OP, %WRITE_OP, %STACK_OP,
                       map {$_ => 1} OP_EXIT,
                                     OP_NUMBER_0 .. OP_NUMBER_9,);
 
@@ -248,6 +252,10 @@ sub execute ($self, $op) {
     elsif ($ARITHMETIC_OP {$op}) {
         return $self -> arithmetic ($op);
     }
+    elsif ($STACK_OP {$op}) {
+        $self -> munge_stack ($op);
+        return;
+    }
     die "execute called with unknown operation '$op'\n";
 }
 
@@ -385,6 +393,13 @@ sub init_stack ($self) {
 #
 sub pop_stack ($self) {
     return @{$stack {$self}} ? pop @{$stack {$self}} : 0
+}
+
+#
+# Return the top value of the stack, or 0 if stack is empty
+#
+sub top_stack ($self) {
+    return @{$stack {$self}} ? $stack {$self} [-1] : 0
 }
 
 #
@@ -560,6 +575,24 @@ sub arithmetic ($self, $op) {
     return;
 }
 
+
+#
+# Manipulate the stack:
+#    - Duplicate a value
+#    - Pop a value (discard)
+#
+sub munge_stack ($self, $op) {
+    if    ($op == OP_STACK_DUPLICATE) {
+        $self -> push_stack ($self -> top_stack);
+    }
+    elsif ($op == OP_STACK_DISCARD) {
+        $self -> pop_stack;
+    }
+    else {
+        die "Unknown stack operation '$op'\n";
+    }
+    return;
+}
 
 1;
 
