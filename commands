@@ -1,23 +1,28 @@
 0-9   If previous command was 0-9, multiply top of stack by 10,
       then add number, else, push number on stack
 #     Wall
+@     Pop value from stack; exit with value mod 255.
+
+.     Pop the top of the stack, output as a number
+,     Pop the top of the stack, output as Unicode character
+
 +     Pop two values from the stack; push the sum
 -     Pop two values from the stack; push the difference
 *     Pop two values from the stack; push the product
 /     Pop two values from the stack; push the quotient and modulus
+
 :     Push the top of the stack (duplicate value)
-.     Pop the top of the stack, output as a number
-,     Pop the top of the stack, output as Unicode character
+_     Pop value from stack (discard)
+\     Retrieve or bury a value from/in the stack
+
 ?     Pop value from stack; if non-zero, turn
 <     Pop two values from the stack; push 1 if less,    0 otherwise
 =     Pop two values from the stack; push 1 if equal,   0 otherwise
 >     Pop two values from the stack; push 1 if greater, 0 otherwise
-@     Pop value from stack; exit with value mod 255.
 &     Read in a number from STDIN, push on stack
 ~     Read in a Unicode character from STDIN, push on stack
 ^     Pop two values from the stack; push code point on stack
 v     Pop three values from the stack; write code point into program
-_     Pop value from stack (discard)
 [     Push program counter on program counter stack
 ]     Pop from the program counter stack
 {     Pop (x, y, direction, turning) from stack; push as program counter
@@ -28,7 +33,6 @@ _     Pop value from stack (discard)
 "     Enter/leave string mode
 `
 '
-\
 |
 !
 %
