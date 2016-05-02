@@ -85,6 +85,7 @@ use constant {
 
     OP_STACK_DUPLICATE    =>  ord (':'),        # 0x3A
     OP_STACK_DISCARD      =>  ord ('_'),        # 0x5F
+    OP_STACK_DIG          =>  ord ('\\'),       # 0x5C
 };
 
 
@@ -98,14 +99,14 @@ use constant {
     ERR_DIVISION_BY_ZERO  =>  -4,
 };
 
-my %ARITHMETIC_OP = map {$_ => 1} OP_ADDITION, OP_SUBTRACTION,
-                                  OP_MULTIPLICATION, OP_DIVISION;
-my %WRITE_OP      = map {$_ => 1} OP_WRITE_NUMBER, OP_WRITE_CHAR;
-my %STACK_OP      = map {$_ => 1} OP_STACK_DUPLICATE, OP_STACK_DISCARD;
+my %ARITHMETIC_OP = map {$_ => 1}  OP_ADDITION,        OP_SUBTRACTION,
+                                   OP_MULTIPLICATION,  OP_DIVISION;
+my %WRITE_OP      = map {$_ => 1}  OP_WRITE_NUMBER,    OP_WRITE_CHAR;
+my %STACK_OP      = map {$_ => 1}  OP_STACK_DUPLICATE, OP_STACK_DISCARD,
+                                   OP_STACK_DIG;
 
 my %VALID_OPS     = (%ARITHMETIC_OP, %WRITE_OP, %STACK_OP,
-                      map {$_ => 1} OP_EXIT,
-                                    OP_NUMBER_0 .. OP_NUMBER_9,);
+                    map {$_ => 1}  OP_EXIT, OP_NUMBER_0 .. OP_NUMBER_9,);
 
 #
 # Characters
@@ -598,6 +599,22 @@ sub munge_stack ($self, $op) {
     }
     elsif ($op == OP_STACK_DISCARD) {
         $self -> pop_stack;
+    }
+    elsif ($op == OP_STACK_DIG) {
+        # Pop the distance from the stack. If distance is 0, we're done.
+        my $distance = $self -> pop_stack or return;
+
+        my @list = $self -> pop_stack ($distance);
+
+        if ($distance > 0) {
+            my $val = shift @list;
+            push @list => $val;
+        }
+        else {
+            my $val = pop @list;
+            unshift @list => $val;
+        }
+        $self -> push_stack (@list);
     }
     else {
         die "Unknown stack operation '$op'\n";
