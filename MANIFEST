@@ -4,6 +4,7 @@ MANIFEST
 t/000_basic.t
 t/010_compile.t
 t/020_run.t
+t/030_push_pop_top_stack.t
 t/100_numbers.t
 t/110_write_number.t
 t/115_write_char.t

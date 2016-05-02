@@ -390,9 +390,20 @@ sub init_stack ($self) {
 
 #
 # Pop from the stack; if stack is empty, return 0.
+# Optionally, give how many items to pop.
 #
-sub pop_stack ($self) {
-    return @{$stack {$self}} ? pop @{$stack {$self}} : 0
+sub pop_stack ($self, $n = 1) {
+    $n = 1 unless $n =~ /^[1-9][0-9]*$/;
+    my @ret;
+    if (@{$stack {$self}} >= $n) {
+        @ret = splice @{$stack {$self}} => - $n;
+    }
+    else {
+        @ret = ((0) x ($n - @{$stack {$self}}), @{$stack {$self}});
+        $stack {$self} = [];
+    }
+
+    return wantarray ? @ret : $ret [0];
 }
 
 #
@@ -405,8 +416,8 @@ sub top_stack ($self) {
 #
 # Push to the stack.
 #
-sub push_stack ($self, $item) {
-    push @{$stack {$self}} => $item;
+sub push_stack ($self, @items) {
+    push @{$stack {$self}} => @items;
 }
 
 
