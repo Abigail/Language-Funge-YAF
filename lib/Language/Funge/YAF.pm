@@ -75,6 +75,9 @@ use constant {
     OP_NUMBER_8           =>  ord ('8'),        # 0x38
     OP_NUMBER_9           =>  ord ('9'),        # 0x39
 
+    OP_STRING             =>  ord ('"'),        # 0x22
+    OP_SKIP               =>  ord (';'),        # 0x3B
+
     OP_WRITE_NUMBER       =>  ord ('.'),        # 0x2E
     OP_WRITE_CHAR         =>  ord (','),        # 0x2C
 
@@ -107,8 +110,10 @@ my %WRITE_OP       = map {$_ => 1}  OP_WRITE_NUMBER,    OP_WRITE_CHAR;
 my %STACK_OP       = map {$_ => 1}  OP_STACK_DUPLICATE, OP_STACK_DISCARD,
                                     OP_STACK_DIG;
 my %CONDITIONAL_OP = map {$_ => 1}  OP_TURN_IF_NON_ZERO;
+my %SCAN_OP        = map {$_ => 1}  OP_STRING,          OP_SKIP;
 
 my %VALID_OPS      = (%ARITHMETIC_OP, %WRITE_OP, %STACK_OP, %CONDITIONAL_OP,
+                      %SCAN_OP,
                      map {$_ => 1}  OP_EXIT, OP_NUMBER_0 .. OP_NUMBER_9,);
 
 #
@@ -264,22 +269,28 @@ sub execute ($self, $op) {
         $self -> conditional ($op);
         return;
     }
+    elsif ($SCAN_OP {$op}) {
+        $self -> scan ($op);
+        return;
+    }
 
     die "execute called with unknown operation '$op'\n";
 }
 
 
 #
-# Return the operation at the given coordinates
+# Return the operation at the given coordinates. If $raw is true, return
+# the operator, even if it's invalid. (But never more than the lower 7 bits).
 #
-sub find_operation ($self, $x, $y) {
+sub find_operation ($self, $x, $y, $invalid_ok = 0) {
     my $op = $program {$self} [$y] [$x];
 
     return OP_NONE if !$op;
 
     $op &= OP_MASK;
 
-    return $op if $op == OP_SPACE || $op == OP_WALL || $VALID_OPS {$op};
+    return $op if $op == OP_SPACE || $op == OP_WALL || $VALID_OPS {$op} ||
+                  $invalid_ok;
 
     return OP_ILLEGAL;
 }
@@ -640,6 +651,26 @@ sub conditional ($self, $op) {
             $self -> set_program_counter ($x, $y, $direction, $turning);
         }
     }
+}
+
+
+#
+# Scan till the next occurance of $op. Either discard what's in between,
+# or push on the stack.
+#
+sub scan ($self, $op) {
+    my ($x, $y, $direction) = $self -> program_counter;
+
+    while (1) {
+        my ($next_x, $next_y) = $self -> step ($x, $y, $direction);
+        $self -> set_program_counter ($next_x, $next_y, $direction);
+        my $this_op = $self -> find_operation ($next_x, $next_y, 1);
+        last if $this_op == $op;
+        $self -> push_stack ($this_op) if $op == OP_STRING;
+        ($x, $y) = ($next_x, $next_y);
+    }
+
+    return;
 }
 
 1;
