@@ -86,6 +86,8 @@ use constant {
     OP_STACK_DUPLICATE    =>  ord (':'),        # 0x3A
     OP_STACK_DISCARD      =>  ord ('_'),        # 0x5F
     OP_STACK_DIG          =>  ord ('\\'),       # 0x5C
+
+    OP_TURN_IF_NON_ZERO   =>  ord ('?'),        # 0x3F
 };
 
 
@@ -99,14 +101,15 @@ use constant {
     ERR_DIVISION_BY_ZERO  =>  -4,
 };
 
-my %ARITHMETIC_OP = map {$_ => 1}  OP_ADDITION,        OP_SUBTRACTION,
-                                   OP_MULTIPLICATION,  OP_DIVISION;
-my %WRITE_OP      = map {$_ => 1}  OP_WRITE_NUMBER,    OP_WRITE_CHAR;
-my %STACK_OP      = map {$_ => 1}  OP_STACK_DUPLICATE, OP_STACK_DISCARD,
-                                   OP_STACK_DIG;
+my %ARITHMETIC_OP  = map {$_ => 1}  OP_ADDITION,        OP_SUBTRACTION,
+                                    OP_MULTIPLICATION,  OP_DIVISION;
+my %WRITE_OP       = map {$_ => 1}  OP_WRITE_NUMBER,    OP_WRITE_CHAR;
+my %STACK_OP       = map {$_ => 1}  OP_STACK_DUPLICATE, OP_STACK_DISCARD,
+                                    OP_STACK_DIG;
+my %CONDITIONAL_OP = map {$_ => 1}  OP_TURN_IF_NON_ZERO;
 
-my %VALID_OPS     = (%ARITHMETIC_OP, %WRITE_OP, %STACK_OP,
-                    map {$_ => 1}  OP_EXIT, OP_NUMBER_0 .. OP_NUMBER_9,);
+my %VALID_OPS      = (%ARITHMETIC_OP, %WRITE_OP, %STACK_OP, %CONDITIONAL_OP,
+                     map {$_ => 1}  OP_EXIT, OP_NUMBER_0 .. OP_NUMBER_9,);
 
 #
 # Characters
@@ -257,6 +260,11 @@ sub execute ($self, $op) {
         $self -> munge_stack ($op);
         return;
     }
+    elsif ($CONDITIONAL_OP {$op}) {
+        $self -> conditional ($op);
+        return;
+    }
+
     die "execute called with unknown operation '$op'\n";
 }
 
@@ -620,6 +628,18 @@ sub munge_stack ($self, $op) {
         die "Unknown stack operation '$op'\n";
     }
     return;
+}
+
+
+sub conditional ($self, $op) {
+    if ($op == OP_TURN_IF_NON_ZERO) {
+        my $value = $self -> pop_stack;
+        if ($value) {
+            my ($x, $y, $direction, $turning) = $self -> program_counter;
+            $direction = turn_direction ($direction, $turning);
+            $self -> set_program_counter ($x, $y, $direction, $turning);
+        }
+    }
 }
 
 1;

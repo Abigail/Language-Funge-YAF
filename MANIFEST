@@ -13,6 +13,7 @@ t/121_arithmetic.t
 t/130_stack_discard.t
 t/131_stack_duplicate.t
 t/132_stack_dig.t
+t/140_conditional.t
 t/950_pod.t
 t/960_pod_coverage.t
 t/980_versions.t
