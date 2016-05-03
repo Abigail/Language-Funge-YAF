@@ -642,6 +642,9 @@ sub munge_stack ($self, $op) {
 }
 
 
+#
+# Pop a value from the stack; if it's non-zero, turn.
+#
 sub conditional ($self, $op) {
     if ($op == OP_TURN_IF_NON_ZERO) {
         my $value = $self -> pop_stack;
