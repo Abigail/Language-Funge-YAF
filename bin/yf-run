@@ -1,0 +1,21 @@
+#!/opt/perl/bin/perl
+
+use 5.010;
+
+use strict;
+use warnings;
+no  warnings 'syntax';
+
+use lib '../lib';
+
+use Language::Funge::YAF;
+
+my $program = do {local $/; <>};
+
+my $rte = Language::Funge::YAF:: -> new -> init;
+$rte -> compile ($program);
+my $r = $rte -> run;
+my @x = $rte -> program_counter;
+exit $r;
+
+__END__
