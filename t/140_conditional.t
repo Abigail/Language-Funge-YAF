@@ -54,6 +54,17 @@ run_tests <<'--', "Turn at conditional if top of stack is true", "1", 7;
       #  #
 --
 
+run_tests <<'--', "Turn the other way if blocked", "7";
+ 7 6 ? 5 . @
+     # 
+    @.
+--
+
+run_tests <<'--', "Continue if both turns are blocked", "5", 7;
+ 7 6 ? 5 . @
+     # 
+--
+
 Test::NoWarnings::had_no_warnings () if $r;
 
 done_testing;

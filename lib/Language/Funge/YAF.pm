@@ -650,8 +650,24 @@ sub conditional ($self, $op) {
         my $value = $self -> pop_stack;
         if ($value) {
             my ($x, $y, $direction, $turning) = $self -> program_counter;
-            $direction = turn_direction ($direction, $turning);
-            $self -> set_program_counter ($x, $y, $direction, $turning);
+            foreach my $try_turn ($turning, - $turning) {
+                my $new_direction = turn_direction ($direction, $try_turn);
+                #
+                # Check whether we'd turn into a wall
+                #
+                my ($next_x, $next_y) = $self -> step ($x, $y, $new_direction,
+                                                        NO_TURNING);
+                my $next_op = $self -> find_operation ($next_x, $next_y);
+                unless ($next_op == OP_WALL) {
+                    $self -> set_program_counter ($x, $y, $new_direction,
+                                                          $try_turn);
+                    return;
+                }
+            }
+            #
+            # If we get here, turning either way leads to a wall.
+            # Continue.  (Perhaps reverse direction?)
+            #
         }
     }
 }
